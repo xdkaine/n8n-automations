@@ -1,0 +1,652 @@
+{
+  "name": "Restarting Production Game Servers (LGSM)",
+  "nodes": [
+    {
+      "parameters": {
+        "command": "=docker exec --user linuxgsm prod-gmod-2 ./gmodserver restart"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -864,
+        192
+      ],
+      "id": "e6f4947e-da0a-4f7e-8f8b-6cdec7b3a2c1",
+      "name": "Execute a command1",
+      "credentials": {
+        "sshPassword": {
+          "id": "cYcQWYDTzQK5dDiG",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=docker exec --user linuxgsm prod-gmod-3 ./gmodserver restart"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -864,
+        576
+      ],
+      "id": "9b860d9e-c6c7-41c3-a76f-623c162f56d4",
+      "name": "Execute a command2",
+      "credentials": {
+        "sshPassword": {
+          "id": "cYcQWYDTzQK5dDiG",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=docker exec --user linuxgsm prod-gmod-1 ./gmodserver restart"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -864,
+        -192
+      ],
+      "id": "ec57475e-8aa2-4259-9cd9-1309ac536047",
+      "name": "Execute a command",
+      "credentials": {
+        "sshPassword": {
+          "id": "cYcQWYDTzQK5dDiG",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=```{{ $json.stdout }}```\ncontainer prod-gmod-1 has started its restart process ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        -192
+      ],
+      "id": "a4f27420-c28d-4762-b6fd-a08283df9f42",
+      "name": "Create a channel",
+      "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=```{{ $json.stdout }}```\ncontainer prod-gmod-2 has started its restart process ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        192
+      ],
+      "id": "f2180652-95c9-40f7-a965-9d0a6e876099",
+      "name": "Create a channel1",
+      "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=```{{ $json.stdout }}```\ncontainer prod-gmod-3 has started its restart process ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        576
+      ],
+      "id": "7b0c1eeb-b31f-43bb-a668-dfaf5a819617",
+      "name": "Create a channel2",
+      "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -416,
+        -192
+      ],
+      "id": "bf57aa3f-c7ab-439f-bd16-dba8fb53bc86",
+      "name": "Wait",
+      "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -416,
+        192
+      ],
+      "id": "26fde391-8a26-4848-8c4b-88593b9065d7",
+      "name": "Wait1",
+      "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -416,
+        576
+      ],
+      "id": "e2568344-baa3-4463-bd1a-9f840d1bd52c",
+      "name": "Wait2",
+      "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
+    },
+    {
+      "parameters": {
+        "command": "=docker exec --user linuxgsm prod-gmod-1 ./gmodserver monitor"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -288
+      ],
+      "id": "87aa8d18-ccf2-4d23-b40c-d84984e08922",
+      "name": "Execute a command3",
+      "credentials": {
+        "sshPassword": {
+          "id": "cYcQWYDTzQK5dDiG",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=docker exec --user linuxgsm prod-gmod-1 ./gmodserver status"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -96
+      ],
+      "id": "1ccc3c7e-913d-4d0d-b246-98a5fcfd13cc",
+      "name": "Execute a command4",
+      "credentials": {
+        "sshPassword": {
+          "id": "cYcQWYDTzQK5dDiG",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=```{{ $json.stdout }}```\ncontainer prod-gmod-1 monitor results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        32,
+        -288
+      ],
+      "id": "c965aa90-f886-4142-92d8-b3983d8a8e3d",
+      "name": "Create a channel3",
+      "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=```{{ $json.stdout }}```\ncontainer prod-gmod-1 status results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        32,
+        -96
+      ],
+      "id": "81e24dab-082e-4903-8c75-5d4eb251556f",
+      "name": "Create a channel4",
+      "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=docker exec --user linuxgsm prod-gmod-2 ./gmodserver monitor"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        96
+      ],
+      "id": "e9d45360-9f2b-4a03-afc1-f7c333d46323",
+      "name": "Execute a command5",
+      "credentials": {
+        "sshPassword": {
+          "id": "cYcQWYDTzQK5dDiG",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=docker exec --user linuxgsm prod-gmod-2 ./gmodserver status"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        288
+      ],
+      "id": "7c33d61d-a22c-486b-91b9-e6c50ed57ef1",
+      "name": "Execute a command6",
+      "credentials": {
+        "sshPassword": {
+          "id": "cYcQWYDTzQK5dDiG",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=```{{ $json.stdout }}```\ncontainer prod-gmod-2 monitor results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        32,
+        96
+      ],
+      "id": "dae56edb-6c13-47cf-9c27-453aff129e65",
+      "name": "Create a channel5",
+      "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=```{{ $json.stdout }}```\ncontainer prod-gmod-2 status results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        32,
+        288
+      ],
+      "id": "1abc70d9-8103-4297-bdf9-55e24404b083",
+      "name": "Create a channel6",
+      "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=docker exec --user linuxgsm prod-gmod-3 ./gmodserver monitor"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        480
+      ],
+      "id": "ff5831e5-f149-41cd-a54e-78d6ccc50d1b",
+      "name": "Execute a command7",
+      "credentials": {
+        "sshPassword": {
+          "id": "cYcQWYDTzQK5dDiG",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=docker exec --user linuxgsm prod-gmod-3 ./gmodserver status"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        672
+      ],
+      "id": "6f094300-1cc9-4b09-bc0b-cf0e5d39884c",
+      "name": "Execute a command8",
+      "credentials": {
+        "sshPassword": {
+          "id": "cYcQWYDTzQK5dDiG",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=```{{ $json.stdout }}```\ncontainer prod-gmod-3 monitor results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        32,
+        480
+      ],
+      "id": "a777401c-b4f7-4fab-802f-5057990a8c0c",
+      "name": "Create a channel7",
+      "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=```{{ $json.stdout }}```\ncontainer prod-gmod-3 status results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        32,
+        672
+      ],
+      "id": "58f00a53-076d-4bb5-a004-7cd7d86badf4",
+      "name": "Create a channel8",
+      "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1088,
+        192
+      ],
+      "id": "718291d3-64c6-44f8-982e-dc4f48372b5b",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute a command": {
+      "main": [
+        [
+          {
+            "node": "Create a channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a command1": {
+      "main": [
+        [
+          {
+            "node": "Create a channel1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a command2": {
+      "main": [
+        [
+          {
+            "node": "Create a channel2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a channel": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a channel1": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a channel2": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Execute a command3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute a command4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a command3": {
+      "main": [
+        [
+          {
+            "node": "Create a channel3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a command4": {
+      "main": [
+        [
+          {
+            "node": "Create a channel4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a command5": {
+      "main": [
+        [
+          {
+            "node": "Create a channel5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a command6": {
+      "main": [
+        [
+          {
+            "node": "Create a channel6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Execute a command5",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute a command6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a command7": {
+      "main": [
+        [
+          {
+            "node": "Create a channel7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a command8": {
+      "main": [
+        [
+          {
+            "node": "Create a channel8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Execute a command7",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute a command8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a command",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute a command1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute a command2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "daf69ecc-aa03-471f-b435-43fc65e467e9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e103660f9625e3a03a65c76a3090731a89dc29deb9930d64e848676566d1455c"
+  },
+  "id": "wz6a9UfKIM4DJIxv",
+  "tags": []
+}
