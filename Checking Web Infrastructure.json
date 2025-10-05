@@ -1,0 +1,455 @@
+{
+  "name": "Checking Web Infrastructure",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://republicofgaming.xyz",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -368,
+        -512
+      ],
+      "id": "a0b7b749-66b0-4bde-be72-65f328b30368",
+      "name": "HTTP Request",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d4e79741-d708-4802-8758-018b8f5a6c66",
+              "leftValue": "={{ $json.data }}",
+              "rightValue": "=<title>Republic of Gaming | 1942RP Experience</title>",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -144,
+        -512
+      ],
+      "id": "3070b13c-8baa-49a2-8044-00d8e77ecf5c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "n8n automation has detected https://republicofgaming.xyz is OFFLINE ❌",
+        "options": {},
+        "embeds": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -416
+      ],
+      "id": "841fc936-0072-448e-8a17-6a4365468fd4",
+      "name": "Create a channel1",
+      "webhookId": "fc1dd898-35fd-4ab9-9613-17ae76a20202",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://showcase.republicofgaming.xyz",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -368,
+        256
+      ],
+      "id": "e2d7249a-664e-4d5a-909d-9cc726cc30b2",
+      "name": "HTTP Request1",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://canvas.republicofgaming.xyz",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -368,
+        -128
+      ],
+      "id": "38b553b4-9ec4-4348-9beb-ecae84dc653e",
+      "name": "HTTP Request2",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d4e79741-d708-4802-8758-018b8f5a6c66",
+              "leftValue": "={{ $json.data }}",
+              "rightValue": "=<title>Live Collaborative Canvas</title>",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -144,
+        -128
+      ],
+      "id": "6a8bcd33-7066-4343-8af6-f1e0888ff51d",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "n8n automation has detected https://canvas.republicofgaming.xyz is OFFLINE ❌",
+        "options": {},
+        "embeds": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -32
+      ],
+      "id": "3711fad7-64e6-4e72-ae29-927901aa11cf",
+      "name": "Create a channel3",
+      "webhookId": "fc1dd898-35fd-4ab9-9613-17ae76a20202",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d4e79741-d708-4802-8758-018b8f5a6c66",
+              "leftValue": "={{ $json.data }}",
+              "rightValue": "=Kaine's Project Showcase",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -144,
+        256
+      ],
+      "id": "919c03f4-711d-4d6b-88c9-e0f61f44d071",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "n8n automation has detected https://showcase.republicofgaming.xyz is OFFLINE ❌",
+        "options": {},
+        "embeds": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        80,
+        352
+      ],
+      "id": "fc033c25-71ce-4e97-b5f3-e99bb8c271c9",
+      "name": "Create a channel",
+      "webhookId": "fc1dd898-35fd-4ab9-9613-17ae76a20202",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -592,
+        -128
+      ],
+      "id": "5ece9d87-22e5-404d-a5bb-148b9a429168",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "n8n automation has detected https://showcase.republicofgaming.xyz is online✅",
+        "options": {},
+        "embeds": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        80,
+        160
+      ],
+      "id": "c652eb41-72bb-4078-9895-9f575e2d82d1",
+      "name": "Create a channel2",
+      "webhookId": "fc1dd898-35fd-4ab9-9613-17ae76a20202",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "n8n automation has detected https://canvas.republicofgaming.xyz is online✅",
+        "options": {},
+        "embeds": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -224
+      ],
+      "id": "4022fa5d-97e0-4712-8350-bf5d5110611c",
+      "name": "Create a channel4",
+      "webhookId": "fc1dd898-35fd-4ab9-9613-17ae76a20202",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "n8n automation has detected https://republicofgaming.xyz is online✅",
+        "options": {},
+        "embeds": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -608
+      ],
+      "id": "c25509da-6ea7-4fc0-8039-82787ff263b9",
+      "name": "Create a channel5",
+      "webhookId": "fc1dd898-35fd-4ab9-9613-17ae76a20202",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "OtRE4o2Y73nt2UtI",
+          "name": "Discord Webhook account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create a channel5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a channel1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a channel1": {
+      "main": [
+        []
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Create a channel4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a channel3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Create a channel2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "060a8b4a-38fe-4d62-9eb0-5bb3269f70e9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e103660f9625e3a03a65c76a3090731a89dc29deb9930d64e848676566d1455c"
+  },
+  "id": "B1j1ahibWNRJs5hi",
+  "tags": []
+}
