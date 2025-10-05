@@ -623,16 +623,6 @@
             "node": "Execute a command",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Execute a command1",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Execute a command2",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -642,7 +632,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "daf69ecc-aa03-471f-b435-43fc65e467e9",
+  "versionId": "08ebc10f-f9df-41c3-a199-601804739672",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "e103660f9625e3a03a65c76a3090731a89dc29deb9930d64e848676566d1455c"
