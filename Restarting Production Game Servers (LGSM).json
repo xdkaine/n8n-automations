@@ -126,6 +126,7 @@
     },
     {
       "parameters": {
+        "amount": 3,
         "unit": "minutes"
       },
       "type": "n8n-nodes-base.wait",
@@ -189,7 +190,7 @@
     },
     {
       "parameters": {
-        "command": "=docker exec --user linuxgsm prod-gmod-1 ./gmodserver status"
+        "command": "=docker exec --user linuxgsm prod-gmod-1 ./gmodserver details"
       },
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
@@ -220,28 +221,6 @@
       ],
       "id": "c965aa90-f886-4142-92d8-b3983d8a8e3d",
       "name": "Create a channel3",
-      "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
-      "credentials": {
-        "discordWebhookApi": {
-          "id": "OtRE4o2Y73nt2UtI",
-          "name": "Discord Webhook account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "authentication": "webhook",
-        "content": "=```{{ $json.stdout }}```\ncontainer prod-gmod-1 status results",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.discord",
-      "typeVersion": 2,
-      "position": [
-        32,
-        -96
-      ],
-      "id": "81e24dab-082e-4903-8c75-5d4eb251556f",
-      "name": "Create a channel4",
       "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
       "credentials": {
         "discordWebhookApi": {
@@ -432,6 +411,35 @@
       ],
       "id": "718291d3-64c6-44f8-982e-dc4f48372b5b",
       "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=dfg",
+        "options": {},
+        "embeds": {
+          "values": [
+            {
+              "inputMethod": "json"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        16,
+        -96
+      ],
+      "id": "07eb868f-f91a-4d2f-a891-1c0722566811",
+      "name": "Discord",
+      "webhookId": "546a3365-7e4b-4aeb-97ff-2980638c2fe3",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "8aEskR16F7aDXLXq",
+          "name": "Discord Webhook account 2"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -509,11 +517,6 @@
             "node": "Execute a command3",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Execute a command4",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -533,7 +536,7 @@
       "main": [
         [
           {
-            "node": "Create a channel4",
+            "node": "Discord",
             "type": "main",
             "index": 0
           }
@@ -632,7 +635,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "08ebc10f-f9df-41c3-a199-601804739672",
+  "versionId": "99161fb8-c770-4a2c-8da3-8227807f6a17",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "e103660f9625e3a03a65c76a3090731a89dc29deb9930d64e848676566d1455c"
