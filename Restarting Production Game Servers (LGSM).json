@@ -8,14 +8,14 @@
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        -1088,
-        960
+        -1344,
+        2432
       ],
-      "id": "e6f4947e-da0a-4f7e-8f8b-6cdec7b3a2c1",
+      "id": "6dffaf1b-2f97-4e20-84cd-009064fa2332",
       "name": "Execute a command1",
       "credentials": {
         "sshPassword": {
-          "id": "cYcQWYDTzQK5dDiG",
+          "id": "EFTiWRKf0UtNogUs",
           "name": "SSH Password account"
         }
       }
@@ -27,14 +27,14 @@
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        -1088,
-        1376
+        -1344,
+        2848
       ],
-      "id": "9b860d9e-c6c7-41c3-a76f-623c162f56d4",
+      "id": "ce20f957-d759-4a08-b045-9305e4e7c707",
       "name": "Execute a command2",
       "credentials": {
         "sshPassword": {
-          "id": "cYcQWYDTzQK5dDiG",
+          "id": "EFTiWRKf0UtNogUs",
           "name": "SSH Password account"
         }
       }
@@ -46,14 +46,14 @@
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        -864,
-        64
+        -1120,
+        1184
       ],
-      "id": "ec57475e-8aa2-4259-9cd9-1309ac536047",
+      "id": "1043254d-a32f-4446-b4e1-26b210a7406d",
       "name": "Execute a command",
       "credentials": {
         "sshPassword": {
-          "id": "cYcQWYDTzQK5dDiG",
+          "id": "EFTiWRKf0UtNogUs",
           "name": "SSH Password account"
         }
       }
@@ -67,18 +67,20 @@
       "type": "n8n-nodes-base.discord",
       "typeVersion": 2,
       "position": [
-        -640,
-        64
+        -896,
+        1184
       ],
-      "id": "a4f27420-c28d-4762-b6fd-a08283df9f42",
+      "id": "cf56a1b2-824c-4502-be88-4f4527a9cfbd",
       "name": "Create a channel",
       "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
+      "retryOnFail": true,
       "credentials": {
         "discordWebhookApi": {
-          "id": "OtRE4o2Y73nt2UtI",
+          "id": "BkpR9JOAXv7mphas",
           "name": "Discord Webhook account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -89,15 +91,15 @@
       "type": "n8n-nodes-base.discord",
       "typeVersion": 2,
       "position": [
-        -864,
-        960
+        -1120,
+        2432
       ],
-      "id": "f2180652-95c9-40f7-a965-9d0a6e876099",
+      "id": "76de83f7-a9af-4a33-9d33-435d2ffcda97",
       "name": "Create a channel1",
       "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
       "credentials": {
         "discordWebhookApi": {
-          "id": "OtRE4o2Y73nt2UtI",
+          "id": "BkpR9JOAXv7mphas",
           "name": "Discord Webhook account"
         }
       }
@@ -111,15 +113,15 @@
       "type": "n8n-nodes-base.discord",
       "typeVersion": 2,
       "position": [
-        -864,
-        1376
+        -1120,
+        2848
       ],
-      "id": "7b0c1eeb-b31f-43bb-a668-dfaf5a819617",
+      "id": "684fe40e-5444-42a4-a880-7834f63ce38e",
       "name": "Create a channel2",
       "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
       "credentials": {
         "discordWebhookApi": {
-          "id": "OtRE4o2Y73nt2UtI",
+          "id": "BkpR9JOAXv7mphas",
           "name": "Discord Webhook account"
         }
       }
@@ -132,10 +134,10 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        -416,
-        64
+        -672,
+        1184
       ],
-      "id": "bf57aa3f-c7ab-439f-bd16-dba8fb53bc86",
+      "id": "addac22e-c9a0-4a9f-ba6e-3308a518c213",
       "name": "Wait",
       "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
     },
@@ -147,10 +149,10 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        -640,
-        960
+        -896,
+        2432
       ],
-      "id": "26fde391-8a26-4848-8c4b-88593b9065d7",
+      "id": "8fa40985-9641-43f6-9c0c-e22e423d3de4",
       "name": "Wait1",
       "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
     },
@@ -162,10 +164,10 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        -640,
-        1376
+        -896,
+        2848
       ],
-      "id": "e2568344-baa3-4463-bd1a-9f840d1bd52c",
+      "id": "7247390f-8831-4e13-b95c-4fe43d197c89",
       "name": "Wait2",
       "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
     },
@@ -176,17 +178,19 @@
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        -192,
-        160
+        -448,
+        1184
       ],
-      "id": "87aa8d18-ccf2-4d23-b40c-d84984e08922",
+      "id": "88450562-e507-4a8d-98a8-3e7d95a13b5b",
       "name": "Execute a command3",
+      "retryOnFail": true,
       "credentials": {
         "sshPassword": {
-          "id": "cYcQWYDTzQK5dDiG",
+          "id": "EFTiWRKf0UtNogUs",
           "name": "SSH Password account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -195,14 +199,14 @@
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        -192,
-        -32
+        -1344,
+        256
       ],
-      "id": "1ccc3c7e-913d-4d0d-b246-98a5fcfd13cc",
+      "id": "5a80054b-7b78-482c-b036-bb6bc36f8224",
       "name": "Execute a command4",
       "credentials": {
         "sshPassword": {
-          "id": "cYcQWYDTzQK5dDiG",
+          "id": "EFTiWRKf0UtNogUs",
           "name": "SSH Password account"
         }
       }
@@ -216,18 +220,20 @@
       "type": "n8n-nodes-base.discord",
       "typeVersion": 2,
       "position": [
-        32,
-        160
+        -224,
+        1184
       ],
-      "id": "c965aa90-f886-4142-92d8-b3983d8a8e3d",
+      "id": "b773c2ff-8b9d-492d-86dd-88ea8c8a580c",
       "name": "Create a channel3",
       "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
+      "retryOnFail": true,
       "credentials": {
         "discordWebhookApi": {
-          "id": "OtRE4o2Y73nt2UtI",
+          "id": "BkpR9JOAXv7mphas",
           "name": "Discord Webhook account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -236,14 +242,14 @@
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        -416,
-        864
+        -672,
+        2336
       ],
-      "id": "e9d45360-9f2b-4a03-afc1-f7c333d46323",
+      "id": "49ff0e73-892b-42ef-88a1-3e4827ff8c2a",
       "name": "Execute a command5",
       "credentials": {
         "sshPassword": {
-          "id": "cYcQWYDTzQK5dDiG",
+          "id": "EFTiWRKf0UtNogUs",
           "name": "SSH Password account"
         }
       }
@@ -255,14 +261,14 @@
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        -416,
-        1056
+        -672,
+        2528
       ],
-      "id": "7c33d61d-a22c-486b-91b9-e6c50ed57ef1",
+      "id": "65721959-7496-4c87-9eef-b11d4e4efbb1",
       "name": "Execute a command6",
       "credentials": {
         "sshPassword": {
-          "id": "cYcQWYDTzQK5dDiG",
+          "id": "EFTiWRKf0UtNogUs",
           "name": "SSH Password account"
         }
       }
@@ -276,15 +282,15 @@
       "type": "n8n-nodes-base.discord",
       "typeVersion": 2,
       "position": [
-        -192,
-        864
+        -448,
+        2336
       ],
-      "id": "dae56edb-6c13-47cf-9c27-453aff129e65",
+      "id": "523d3c91-e649-4375-9fe9-255e0f2652e6",
       "name": "Create a channel5",
       "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
       "credentials": {
         "discordWebhookApi": {
-          "id": "OtRE4o2Y73nt2UtI",
+          "id": "BkpR9JOAXv7mphas",
           "name": "Discord Webhook account"
         }
       }
@@ -298,15 +304,15 @@
       "type": "n8n-nodes-base.discord",
       "typeVersion": 2,
       "position": [
-        -192,
-        1056
+        -448,
+        2528
       ],
-      "id": "1abc70d9-8103-4297-bdf9-55e24404b083",
+      "id": "75f414e4-bea0-4a28-b9b6-b2cc0703993b",
       "name": "Create a channel6",
       "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
       "credentials": {
         "discordWebhookApi": {
-          "id": "OtRE4o2Y73nt2UtI",
+          "id": "BkpR9JOAXv7mphas",
           "name": "Discord Webhook account"
         }
       }
@@ -318,14 +324,14 @@
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        -416,
-        1280
+        -672,
+        2752
       ],
-      "id": "ff5831e5-f149-41cd-a54e-78d6ccc50d1b",
+      "id": "8d01d534-57d7-454f-a849-ad7ab0ddf8e2",
       "name": "Execute a command7",
       "credentials": {
         "sshPassword": {
-          "id": "cYcQWYDTzQK5dDiG",
+          "id": "EFTiWRKf0UtNogUs",
           "name": "SSH Password account"
         }
       }
@@ -337,14 +343,14 @@
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
       "position": [
-        -416,
-        1472
+        -672,
+        2944
       ],
-      "id": "6f094300-1cc9-4b09-bc0b-cf0e5d39884c",
+      "id": "fc817954-6603-4073-a317-ef64e3b2c41d",
       "name": "Execute a command8",
       "credentials": {
         "sshPassword": {
-          "id": "cYcQWYDTzQK5dDiG",
+          "id": "EFTiWRKf0UtNogUs",
           "name": "SSH Password account"
         }
       }
@@ -358,15 +364,15 @@
       "type": "n8n-nodes-base.discord",
       "typeVersion": 2,
       "position": [
-        -192,
-        1280
+        -448,
+        2752
       ],
-      "id": "a777401c-b4f7-4fab-802f-5057990a8c0c",
+      "id": "b3bf32c2-6c94-4452-a323-7f41768c9be6",
       "name": "Create a channel7",
       "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
       "credentials": {
         "discordWebhookApi": {
-          "id": "OtRE4o2Y73nt2UtI",
+          "id": "BkpR9JOAXv7mphas",
           "name": "Discord Webhook account"
         }
       }
@@ -380,15 +386,15 @@
       "type": "n8n-nodes-base.discord",
       "typeVersion": 2,
       "position": [
-        -192,
-        1472
+        -448,
+        2944
       ],
-      "id": "58f00a53-076d-4bb5-a004-7cd7d86badf4",
+      "id": "bf0f01d4-464c-4a35-94f5-9372c8ad70ea",
       "name": "Create a channel8",
       "webhookId": "1ea7df7b-e085-4011-8d3d-36911796627f",
       "credentials": {
         "discordWebhookApi": {
-          "id": "OtRE4o2Y73nt2UtI",
+          "id": "BkpR9JOAXv7mphas",
           "name": "Discord Webhook account"
         }
       }
@@ -398,7 +404,7 @@
         "rule": {
           "interval": [
             {
-              "triggerAtHour": 3
+              "triggerAtHour": 2
             }
           ]
         }
@@ -406,10 +412,10 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        -1088,
-        64
+        -1344,
+        1184
       ],
-      "id": "718291d3-64c6-44f8-982e-dc4f48372b5b",
+      "id": "e0eed269-8063-47fc-92a4-49a81bc2f071",
       "name": "Schedule Trigger"
     },
     {
@@ -428,23 +434,23 @@
       "type": "n8n-nodes-base.discord",
       "typeVersion": 2,
       "position": [
-        32,
-        -32
+        -1120,
+        256
       ],
-      "id": "07eb868f-f91a-4d2f-a891-1c0722566811",
+      "id": "ab6a6a61-bc3a-4b4f-b29f-ae9635b1ffa7",
       "name": "Discord",
       "webhookId": "546a3365-7e4b-4aeb-97ff-2980638c2fe3",
       "credentials": {
         "discordWebhookApi": {
-          "id": "8aEskR16F7aDXLXq",
-          "name": "Discord Webhook account 2"
+          "id": "BkpR9JOAXv7mphas",
+          "name": "Discord Webhook account"
         }
       }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://192.168.1.69/api/v2.0/vm/id/10/restart",
+        "url": "https://10.128.0.6/api/v2.0/vm/id/50/restart",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBearerAuth",
         "options": {
@@ -454,22 +460,31 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        256,
-        -320
+        0,
+        704
       ],
-      "id": "449e1a36-37c1-4d49-a240-fa75087469ce",
+      "id": "b0c88dca-362a-4ce2-b96c-75cfa0d6686c",
       "name": "HTTP Request",
+      "alwaysOutputData": true,
       "credentials": {
         "httpBearerAuth": {
-          "id": "feeWefpHL8rC3QkD",
+          "id": "JJrGpaWR2CFIzksw",
           "name": "Bearer Auth account"
+        },
+        "httpHeaderAuth": {
+          "id": "cx5SLdwqIo0ISpne",
+          "name": "Header Auth account"
+        },
+        "httpCustomAuth": {
+          "id": "8zQtHWOLJZyT2xQ3",
+          "name": "Custom Auth account"
         }
       }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://192.168.1.69/api/v2.0/vm/id/11/restart",
+        "url": "https://10.128.0.6/api/v2.0/vm/id/51/restart",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBearerAuth",
         "options": {
@@ -479,14 +494,14 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        256,
-        -128
+        224,
+        896
       ],
-      "id": "911f6739-04ad-4665-afc9-69acd2f5b81b",
+      "id": "3564c6fd-f357-4b49-947f-2b3f0856d895",
       "name": "HTTP Request1",
       "credentials": {
         "httpBearerAuth": {
-          "id": "feeWefpHL8rC3QkD",
+          "id": "JJrGpaWR2CFIzksw",
           "name": "Bearer Auth account"
         }
       }
@@ -494,7 +509,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://192.168.1.69/api/v2.0/vm/id/12/restart",
+        "url": "https://10.128.0.6/api/v2.0/vm/id/52/restart",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBearerAuth",
         "options": {
@@ -504,14 +519,14 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        256,
-        64
+        224,
+        1088
       ],
-      "id": "b601472d-4d72-46b4-ba42-a70d2a3b86d8",
+      "id": "a5b99f9c-326e-4627-833f-c0bed6a00666",
       "name": "HTTP Request2",
       "credentials": {
         "httpBearerAuth": {
-          "id": "feeWefpHL8rC3QkD",
+          "id": "JJrGpaWR2CFIzksw",
           "name": "Bearer Auth account"
         }
       }
@@ -519,7 +534,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://192.168.1.69/api/v2.0/vm/id/27/restart",
+        "url": "https://10.128.0.6//api/v2.0/vm/id/54/restart",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBearerAuth",
         "options": {
@@ -529,14 +544,14 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        256,
-        256
+        224,
+        1280
       ],
-      "id": "02f6c0be-fe62-4360-8a8c-dd23744ce3dc",
+      "id": "c0d02e69-e66d-4bf3-88bb-662fca72481d",
       "name": "HTTP Request3",
       "credentials": {
         "httpBearerAuth": {
-          "id": "feeWefpHL8rC3QkD",
+          "id": "JJrGpaWR2CFIzksw",
           "name": "Bearer Auth account"
         }
       }
@@ -544,7 +559,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://192.168.1.69/api/v2.0/vm/id/28/restart",
+        "url": "https://10.128.0.6/api/v2.0/vm/id/55/restart",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBearerAuth",
         "options": {
@@ -554,14 +569,14 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        256,
-        448
+        224,
+        1472
       ],
-      "id": "256eeaa4-5ea7-441b-acae-0b9438912077",
+      "id": "bec0afb3-47db-4df8-b9cb-b0b7d98ba11b",
       "name": "HTTP Request4",
       "credentials": {
         "httpBearerAuth": {
-          "id": "feeWefpHL8rC3QkD",
+          "id": "JJrGpaWR2CFIzksw",
           "name": "Bearer Auth account"
         }
       }
@@ -569,7 +584,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://192.168.1.69/api/v2.0/vm/id/29/restart",
+        "url": "https://10.128.0.6/api/v2.0/vm/id/56/restart",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBearerAuth",
         "options": {
@@ -579,17 +594,150 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        256,
-        640
+        224,
+        1664
       ],
-      "id": "a29ad5f6-ca96-4c6c-a88d-6d908ce55d27",
+      "id": "25260885-99d7-466d-a422-1ef2ea21eb6a",
       "name": "HTTP Request5",
       "credentials": {
         "httpBearerAuth": {
-          "id": "feeWefpHL8rC3QkD",
+          "id": "JJrGpaWR2CFIzksw",
           "name": "Bearer Auth account"
         }
       }
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1344,
+        32
+      ],
+      "id": "0e1104f6-ee9b-4880-b910-666d6d317fdb",
+      "name": "Wait3",
+      "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1344,
+        480
+      ],
+      "id": "15ac097e-b8d7-46ff-9653-49b8f47579d6",
+      "name": "Wait4",
+      "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1344,
+        1888
+      ],
+      "id": "ed62d873-6cd7-455c-bf6a-69753545a985",
+      "name": "Wait5",
+      "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1344,
+        2112
+      ],
+      "id": "0c64520d-aaa6-43d7-9ad5-3260170e7b37",
+      "name": "Wait6",
+      "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        896
+      ],
+      "id": "bd017396-630b-43d6-beaa-6669d1c20452",
+      "name": "Wait7",
+      "webhookId": "218d25e4-98ea-4359-845f-7f11df909183"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        1088
+      ],
+      "id": "d07955f5-799a-49b8-b99b-c7744eecf643",
+      "name": "Wait8",
+      "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        1280
+      ],
+      "id": "0e37f515-2ede-4ca9-98ef-d556ce4358ba",
+      "name": "Wait9",
+      "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
+    },
+    {
+      "parameters": {
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        1472
+      ],
+      "id": "d11653ad-be87-4979-80ae-1e68c1d41137",
+      "name": "Wait10",
+      "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
+    },
+    {
+      "parameters": {
+        "amount": 6,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        1664
+      ],
+      "id": "50f17fc7-c79f-4d9b-97ca-a211f0b11a00",
+      "name": "Wait11",
+      "webhookId": "78ff2691-809f-4506-8f39-16d8080b559e"
     }
   ],
   "pinData": {},
@@ -789,25 +937,80 @@
             "index": 0
           },
           {
-            "node": "HTTP Request1",
+            "node": "Wait11",
             "type": "main",
             "index": 0
           },
+          {
+            "node": "Wait10",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait9",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait8",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait7": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait8": {
+      "main": [
+        [
           {
             "node": "HTTP Request2",
             "type": "main",
             "index": 0
-          },
+          }
+        ]
+      ]
+    },
+    "Wait9": {
+      "main": [
+        [
           {
             "node": "HTTP Request3",
             "type": "main",
             "index": 0
-          },
+          }
+        ]
+      ]
+    },
+    "Wait10": {
+      "main": [
+        [
           {
             "node": "HTTP Request4",
             "type": "main",
             "index": 0
-          },
+          }
+        ]
+      ]
+    },
+    "Wait11": {
+      "main": [
+        [
           {
             "node": "HTTP Request5",
             "type": "main",
@@ -819,13 +1022,14 @@
   },
   "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "availableInMCP": false
   },
-  "versionId": "69e54627-5b7f-48ac-84b5-29ab370c0e37",
+  "versionId": "f9edee6f-5903-488b-9c65-9988fb21c96f",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "e103660f9625e3a03a65c76a3090731a89dc29deb9930d64e848676566d1455c"
+    "instanceId": "94466eb9305cbb1792a8bad57c46d040e2297763e92d6394082da2bfd980a745"
   },
-  "id": "wz6a9UfKIM4DJIxv",
+  "id": "6gs0HlDztmV28Ugj",
   "tags": []
 }
