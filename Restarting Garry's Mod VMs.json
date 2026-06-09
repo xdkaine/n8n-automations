@@ -1,6 +1,1699 @@
 {
-  "name": "Restarting Garry's Mod VMs",
+  "name": "Rotate Garry's Mod TrueNAS VMs - 4 of 6 strict gated",
   "nodes": [
+    {
+      "parameters": {
+        "content": "## TrueNAS Garry's Mod VM rotation - strict status gated\n\nEvery hour:\n1. Build a random 4-of-6 rotation from VM IDs 50, 51, 52, 54, 55, and 56.\n2. Check all six VM states and stop only those that report RUNNING.\n3. Wait each selected VM's independent random 0-15 minute offset.\n4. Immediately before each start, check status again.\n5. Start only if the fresh state is STOPPED.\n6. If the VM is still RUNNING, send another stop, wait 60 seconds, re-check, and only start if it is now STOPPED.\n\nThis avoids TrueNAS 422 errors like: 'already running' and 'state is currently not RUNNING'.",
+        "height": 460,
+        "width": 720,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2144,
+        1568
+      ],
+      "id": "9d9434c1-2b0c-4255-a027-6b3ef3fa668c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ---- TrueNAS Garry's Mod VM rotation config ----\n// There are six VM IDs in the uploaded workflow: 50, 51, 52, 54, 55, and 56.\n// Each run:\n//   1. Check and stop all six VMs if they are RUNNING.\n//   2. Pick exactly 4 of the 6 VMs at random.\n//   3. Give each selected VM its own random, unique start offset from 0-15 minutes.\n//      Example: one starts at 3m, another at 4m, another at 11m, another at 15m.\n// Stop/status/start HTTP nodes are configured to continue on errors, because TrueNAS can reject\n// vm.stop or vm.start if a VM changes state between checks and commands.\n// Start branches re-check status immediately before starting to avoid \"already running\" 422 errors.\n\nconst TRUE_NAS_BASE_URL = 'https://10.128.0.6';\nconst VMS = [\n  { id: 50, name: 'GMod VM 50' },\n  { id: 51, name: 'GMod VM 51' },\n  { id: 52, name: 'GMod VM 52' },\n  { id: 54, name: 'GMod VM 54' },\n  { id: 55, name: 'GMod VM 55' },\n  { id: 56, name: 'GMod VM 56' },\n];\n\nconst START_COUNT = 4;\nconst START_WINDOW_MINUTES = 15;\n\nif (START_COUNT > VMS.length) {\n  throw new Error(`START_COUNT (${START_COUNT}) cannot be greater than VM count (${VMS.length}).`);\n}\nif (START_COUNT > START_WINDOW_MINUTES + 1) {\n  throw new Error('START_COUNT requires more unique minute slots than the configured window allows.');\n}\n\nfunction shuffle(array) {\n  const copy = [...array];\n  for (let i = copy.length - 1; i > 0; i--) {\n    const j = Math.floor(Math.random() * (i + 1));\n    [copy[i], copy[j]] = [copy[j], copy[i]];\n  }\n  return copy;\n}\n\nconst selected = shuffle(VMS).slice(0, START_COUNT);\nconst selectedIds = new Set(selected.map(vm => vm.id));\nconst excluded = VMS.filter(vm => !selectedIds.has(vm.id));\n\n// Pick unique minute offsets so the 4 selected VMs are staggered instead of accidentally all starting together.\nconst delayMinuteSlots = shuffle(Array.from({ length: START_WINDOW_MINUTES + 1 }, (_, i) => i)).slice(0, START_COUNT);\n\nconst startSchedule = selected\n  .map((vm, index) => ({\n    ...vm,\n    delayMinutes: delayMinuteSlots[index],\n    delaySeconds: delayMinuteSlots[index] * 60,\n  }))\n  .sort((a, b) => a.delayMinutes - b.delayMinutes);\n\nreturn [\n  {\n    json: {\n      runId: new Date().toISOString(),\n      baseUrl: TRUE_NAS_BASE_URL,\n      vmIds: VMS.map(vm => vm.id),\n      vmPool: VMS,\n      startCount: START_COUNT,\n      startWindowMinutes: START_WINDOW_MINUTES,\n      selectedVmIds: startSchedule.map(vm => vm.id),\n      excludedVmIds: excluded.map(vm => vm.id),\n      startSchedule,\n      note: 'Each startSchedule entry has its own delayMinutes value. A delay of 0 means start immediately after the stop/status phase.',\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1920,
+        2192
+      ],
+      "id": "86528eeb-5e70-435f-9b22-c7cec7b1a837",
+      "name": "Plan VM Rotation"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/50/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1696,
+        2192
+      ],
+      "id": "0856f10e-37e1-426a-b2d9-6a9b0c32a7d6",
+      "name": "Check VM 50 Status",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5614aeee-ef10-4b95-884c-99441a00889d",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1472,
+        2192
+      ],
+      "id": "5b811e92-c088-458e-a3b2-b1eb802c8232",
+      "name": "Is VM 50 Running?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/50/stop' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"force\": false, \"force_after_timeout\": true}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1248,
+        2128
+      ],
+      "id": "25482e9b-3f78-4ef4-ae15-f82efbee12f4",
+      "name": "Stop VM 50",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/51/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1024,
+        2192
+      ],
+      "id": "ce55e6e0-c5ba-4d73-b88d-087d4f228e32",
+      "name": "Check VM 51 Status",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8d8701ae-c754-47d6-8859-11f5fc95725e",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -800,
+        2192
+      ],
+      "id": "a4493ad1-29be-4420-852f-de4e26fdc3a1",
+      "name": "Is VM 51 Running?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/51/stop' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"force\": false, \"force_after_timeout\": true}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -576,
+        2128
+      ],
+      "id": "2cd49453-ca9b-4c46-a712-19f01c8edaf1",
+      "name": "Stop VM 51",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/52/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -352,
+        2192
+      ],
+      "id": "bc7b523a-4520-4402-806b-83b595f07d7b",
+      "name": "Check VM 52 Status",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f676cddc-0634-4b0c-8cdf-3122a3f91959",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -128,
+        2192
+      ],
+      "id": "48c8fe26-741f-466a-af0d-8c33da7a8914",
+      "name": "Is VM 52 Running?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/52/stop' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"force\": false, \"force_after_timeout\": true}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        96,
+        2128
+      ],
+      "id": "aa1b04a4-6696-431c-9286-e47e7f8a1905",
+      "name": "Stop VM 52",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/54/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        320,
+        2192
+      ],
+      "id": "a46ee180-ebc8-4e40-9f45-f59134c2b193",
+      "name": "Check VM 54 Status",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1af5df8c-d00a-4e0d-be1d-317fe5a56909",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        2192
+      ],
+      "id": "bae2aae1-bcbd-416f-89b6-1419b660db9d",
+      "name": "Is VM 54 Running?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/54/stop' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"force\": false, \"force_after_timeout\": true}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        768,
+        2128
+      ],
+      "id": "0e5092f6-3fdd-4a30-8cff-6654cc900c42",
+      "name": "Stop VM 54",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/55/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        992,
+        2192
+      ],
+      "id": "af9da7d8-9a9c-427f-b4ae-b1ccdc858992",
+      "name": "Check VM 55 Status",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1738132c-d8b0-4f47-acb0-8ee6d819b0ad",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1216,
+        2192
+      ],
+      "id": "62273220-f89d-47bd-804c-992a931c9563",
+      "name": "Is VM 55 Running?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/55/stop' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"force\": false, \"force_after_timeout\": true}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        2128
+      ],
+      "id": "3188f0a7-2d56-4f79-a959-57759d47afb9",
+      "name": "Stop VM 55",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/56/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1664,
+        2192
+      ],
+      "id": "55c8e0f5-df78-4b7b-a4c1-8f88c98c7046",
+      "name": "Check VM 56 Status",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "89cb50e1-e6a2-4ec9-a49a-02eedee9b819",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1888,
+        2192
+      ],
+      "id": "230150c4-b4aa-4725-96cb-3f2554db4c02",
+      "name": "Is VM 56 Running?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/56/stop' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"force\": false, \"force_after_timeout\": true}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2112,
+        2192
+      ],
+      "id": "1e5c97c3-449a-4a46-8e0e-725c82db91c9",
+      "name": "Stop VM 56",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.max(1, $('Plan VM Rotation').item.json.startSchedule[0].delaySeconds) }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2336,
+        1616
+      ],
+      "id": "60779ffe-0d30-4abf-98d1-6aa8a91b822e",
+      "name": "Wait Start Slot 1",
+      "webhookId": "db338283-11fb-4cb6-888f-60d8ace8c235"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[0].id + '/start' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"overcommit\": false}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4128,
+        1616
+      ],
+      "id": "63ded1ba-447e-4f06-804a-453ab2ec9efb",
+      "name": "Start Slot 1 Selected VM",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.max(1, $('Plan VM Rotation').item.json.startSchedule[1].delaySeconds) }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2336,
+        2000
+      ],
+      "id": "1e614096-18ef-45d2-826e-e711f67e1bf7",
+      "name": "Wait Start Slot 2",
+      "webhookId": "faa0f9db-195b-4000-80c1-c0d23118b5d9"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[1].id + '/start' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"overcommit\": false}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4128,
+        2000
+      ],
+      "id": "4366c816-6747-4c49-be0c-2937e00e119d",
+      "name": "Start Slot 2 Selected VM",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.max(1, $('Plan VM Rotation').item.json.startSchedule[2].delaySeconds) }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2336,
+        2384
+      ],
+      "id": "4fefadeb-3928-4e88-bc43-58a92d0744c3",
+      "name": "Wait Start Slot 3",
+      "webhookId": "d39f175b-f6ff-4784-923e-d8b41d8666e9"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[2].id + '/start' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"overcommit\": false}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4128,
+        2384
+      ],
+      "id": "d2dcc914-d224-4bff-9290-7c6b4101c5de",
+      "name": "Start Slot 3 Selected VM",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.max(1, $('Plan VM Rotation').item.json.startSchedule[3].delaySeconds) }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2336,
+        2768
+      ],
+      "id": "9aa3be2e-0890-4d8c-8823-2aa0a5291e9a",
+      "name": "Wait Start Slot 4",
+      "webhookId": "1c79a800-73d9-4801-91e5-4b52be4479e0"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[3].id + '/start' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"overcommit\": false}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4128,
+        2768
+      ],
+      "id": "bb702686-aeda-4580-b59e-869fea063121",
+      "name": "Start Slot 4 Selected VM",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[0].id + '/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2560,
+        1616
+      ],
+      "id": "b3f8ae1b-7fbb-4ae8-b080-4aafc1a53482",
+      "name": "Pre-Start Check Slot 1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "caed4ad3-cbe0-4997-91de-d5c1870811d6",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2784,
+        1616
+      ],
+      "id": "5acdd1c8-4e06-43ba-a33e-df82946ef5fb",
+      "name": "Is Slot 1 Already Running?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[0].id + '/stop' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"force\": false, \"force_after_timeout\": true}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3008,
+        1520
+      ],
+      "id": "5127c6e1-6200-472d-a72f-96068fe4e7e2",
+      "name": "Re-Stop Slot 1 VM If Still Running",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3232,
+        1520
+      ],
+      "id": "8a1ec031-4732-4b04-ba1c-cfe578cd54cd",
+      "name": "Wait Slot 1 Shutdown Grace",
+      "webhookId": "8eaf5f07-c9a2-43b7-a826-1a6a44b4d2eb"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[0].id + '/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3456,
+        1520
+      ],
+      "id": "14785df8-5131-430d-8dae-8c476f65bc24",
+      "name": "Post-Retry Check Slot 1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d0da6bdf-a471-4759-81c7-8f07bed20a00",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3680,
+        1520
+      ],
+      "id": "8509a412-1219-41e8-b03a-158c3d72de7c",
+      "name": "Is Slot 1 Still Running After Retry?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[1].id + '/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2560,
+        2000
+      ],
+      "id": "66ae3f6f-4f30-4ed1-a2ce-ffcdc7bd0fe7",
+      "name": "Pre-Start Check Slot 2",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f9e63213-c283-48f6-b8f5-5764b9a61756",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2784,
+        2000
+      ],
+      "id": "9e04a8de-650d-4f32-b5af-f7008d9193bd",
+      "name": "Is Slot 2 Already Running?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[1].id + '/stop' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"force\": false, \"force_after_timeout\": true}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3008,
+        1904
+      ],
+      "id": "f12af7e2-a8c7-4474-a22e-ee7d08e64f47",
+      "name": "Re-Stop Slot 2 VM If Still Running",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3232,
+        1904
+      ],
+      "id": "c14619e3-5a87-49c1-845e-1abefccd5b96",
+      "name": "Wait Slot 2 Shutdown Grace",
+      "webhookId": "d95862bb-2613-4513-b213-fd2dd7b8234f"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[1].id + '/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3456,
+        1904
+      ],
+      "id": "276920fc-740e-48e2-a78c-96786ec09001",
+      "name": "Post-Retry Check Slot 2",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d0c11b00-bd87-4278-a495-2c1e8b4e3736",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3680,
+        1904
+      ],
+      "id": "8855d45e-6ccf-497b-b3c7-2a15414935f1",
+      "name": "Is Slot 2 Still Running After Retry?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[2].id + '/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2560,
+        2384
+      ],
+      "id": "f2c2351a-2d03-4b52-952a-67e9d46e4f3f",
+      "name": "Pre-Start Check Slot 3",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7411c481-6986-450c-a46e-26e23ecae36a",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2784,
+        2384
+      ],
+      "id": "ec015f37-c6c9-4498-b540-c9ca5261b1b9",
+      "name": "Is Slot 3 Already Running?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[2].id + '/stop' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"force\": false, \"force_after_timeout\": true}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3008,
+        2288
+      ],
+      "id": "0ff11ade-f32a-43f4-ab86-bc35c4a6f872",
+      "name": "Re-Stop Slot 3 VM If Still Running",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3232,
+        2288
+      ],
+      "id": "a4e6ffa9-e00d-427f-a3e5-358fd648b240",
+      "name": "Wait Slot 3 Shutdown Grace",
+      "webhookId": "da4ffff5-9a20-476e-9c6d-8d75560d3e01"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[2].id + '/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3456,
+        2288
+      ],
+      "id": "f605e5f9-2b1c-46ae-9c5f-c709fa87b5ae",
+      "name": "Post-Retry Check Slot 3",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e6ef308c-10c4-47b4-8f49-7b041540d941",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3680,
+        2288
+      ],
+      "id": "f911291b-e8dd-4cc2-82ff-8b1d3773b7d4",
+      "name": "Is Slot 3 Still Running After Retry?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[3].id + '/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2560,
+        2768
+      ],
+      "id": "a187c324-ad3e-46e7-8627-eb0bbbc452d1",
+      "name": "Pre-Start Check Slot 4",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d0c7b225-1ee0-4171-b461-77d30941be0f",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2784,
+        2768
+      ],
+      "id": "dd151159-d5de-410f-ab4d-628d1c56a60a",
+      "name": "Is Slot 4 Already Running?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[3].id + '/stop' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"force\": false, \"force_after_timeout\": true}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3008,
+        2672
+      ],
+      "id": "057a5682-ec27-4b85-8fe3-56c2fe220321",
+      "name": "Re-Stop Slot 4 VM If Still Running",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3232,
+        2672
+      ],
+      "id": "6ffb9ff6-4058-4228-b6bf-8edc33a03e61",
+      "name": "Wait Slot 4 Shutdown Grace",
+      "webhookId": "fd2f7ca8-a7f3-49a3-a1ce-7ee5db9684eb"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Plan VM Rotation').item.json.baseUrl + '/api/v2.0/vm/id/' + $('Plan VM Rotation').item.json.startSchedule[3].id + '/status' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3456,
+        2672
+      ],
+      "id": "44cef505-ad07-4bf5-b63d-c69be1015b10",
+      "name": "Post-Retry Check Slot 4",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "JJrGpaWR2CFIzksw",
+          "name": "Bearer Auth account"
+        }
+      },
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "89f295c2-2e34-47cb-9ca0-79ba915b1325",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "RUNNING",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3680,
+        2672
+      ],
+      "id": "0030f4bb-b51f-4045-96e8-4dca0b59c306",
+      "name": "Is Slot 4 Still Running After Retry?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4391fe09-a403-4805-8aee-76133357a993",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "STOPPED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3904,
+        1712
+      ],
+      "id": "83abfc1b-7859-4524-94ef-5849148ff66e",
+      "name": "Is Slot 1 Stopped Before Start?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7c52964f-3330-43ac-a1cd-d8891c8cac28",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "STOPPED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3904,
+        1520
+      ],
+      "id": "a262c034-6d90-4f73-af58-0a2783b845b4",
+      "name": "Is Slot 1 Stopped After Retry?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "88ad3a82-d38a-461d-9459-8ba5f392e71e",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "STOPPED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3904,
+        2096
+      ],
+      "id": "794f1402-4920-4e8c-9abf-923de1742982",
+      "name": "Is Slot 2 Stopped Before Start?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3dae7961-b29b-4864-802d-43507aa3b43a",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "STOPPED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3904,
+        1904
+      ],
+      "id": "22ef68bd-17cb-4be4-bfad-0f1af9bd50fe",
+      "name": "Is Slot 2 Stopped After Retry?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5d576168-24fd-4eca-8b63-483a9e9ef12b",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "STOPPED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3904,
+        2480
+      ],
+      "id": "9625a27e-f3ce-4e9b-b1b9-6e614cd94eac",
+      "name": "Is Slot 3 Stopped Before Start?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e33a15ff-9cfa-4cbb-85e9-b52957700b61",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "STOPPED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3904,
+        2288
+      ],
+      "id": "272d73bc-2190-40fd-be4e-48f213a04294",
+      "name": "Is Slot 3 Stopped After Retry?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2c1955a7-aff0-4fd0-9a20-0687c3b35baa",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "STOPPED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3904,
+        2864
+      ],
+      "id": "d06c95a8-4fdd-458b-89a7-87e63cc31148",
+      "name": "Is Slot 4 Stopped Before Start?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "01f91b08-27bd-4fdb-b1ab-259c1de8e143",
+              "leftValue": "={{ (() => { const pick = (v) => { if (v == null) return ''; if (typeof v === 'string') { const s = v.trim(); try { return pick(JSON.parse(s)); } catch (e) { const m = s.match(/\"state\"\\s*:\\s*\"([^\"]+)\"/i); if (m) return m[1]; if (/^(RUNNING|STOPPED|SUSPENDED|PAUSED)$/i.test(s)) return s; return ''; } } if (typeof v === 'object') { return v.state || v.status || pick(v.result) || pick(v.body) || pick(v.data) || pick(v.response) || ''; } return ''; }; return String(pick($json)).toUpperCase(); })() }}",
+              "rightValue": "STOPPED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3904,
+        2672
+      ],
+      "id": "8dbd2dfd-8e0b-44f0-91eb-25740a2154c5",
+      "name": "Is Slot 4 Stopped After Retry?"
+    },
     {
       "parameters": {
         "rule": {
@@ -14,354 +1707,729 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
       "position": [
-        0,
-        96
+        -2144,
+        2192
       ],
-      "id": "6444daa6-1a42-471e-b75f-a54dac432e18",
-      "name": "Schedule Trigger"
-    },
-    {
-      "parameters": {
-        "amount": 2
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        224,
-        -384
-      ],
-      "id": "045b3acc-a437-46cf-bbd2-edb3f45560e1",
-      "name": "Wait",
-      "webhookId": "54af53e6-6dae-46c4-913c-3a1ca85aa1d1"
-    },
-    {
-      "parameters": {
-        "amount": 4
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        224,
-        -192
-      ],
-      "id": "ad70ad4d-e6ad-41f3-bfde-6ede2033e1eb",
-      "name": "Wait1",
-      "webhookId": "54af53e6-6dae-46c4-913c-3a1ca85aa1d1"
-    },
-    {
-      "parameters": {
-        "amount": 6
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        224,
-        0
-      ],
-      "id": "5340f1d6-9340-417b-8fa7-f907c7f4320c",
-      "name": "Wait2",
-      "webhookId": "54af53e6-6dae-46c4-913c-3a1ca85aa1d1"
-    },
-    {
-      "parameters": {
-        "amount": 7
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        224,
-        192
-      ],
-      "id": "7d802960-3294-48b2-8529-c935279e76f2",
-      "name": "Wait3",
-      "webhookId": "54af53e6-6dae-46c4-913c-3a1ca85aa1d1"
-    },
-    {
-      "parameters": {
-        "amount": 8
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        224,
-        384
-      ],
-      "id": "6681f851-c811-456b-840b-404b94041bcb",
-      "name": "Wait4",
-      "webhookId": "54af53e6-6dae-46c4-913c-3a1ca85aa1d1"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://10.128.0.6/api/v2.0/vm/id/50/restart",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth",
-        "options": {
-          "allowUnauthorizedCerts": true
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        448,
-        -384
-      ],
-      "id": "18e79457-4431-4bf7-9f2a-58ae9e8d56d5",
-      "name": "HTTP Request",
-      "alwaysOutputData": true,
-      "credentials": {
-        "httpBearerAuth": {
-          "id": "JJrGpaWR2CFIzksw",
-          "name": "Bearer Auth account"
-        },
-        "httpHeaderAuth": {
-          "id": "cx5SLdwqIo0ISpne",
-          "name": "Header Auth account"
-        },
-        "httpCustomAuth": {
-          "id": "8zQtHWOLJZyT2xQ3",
-          "name": "Custom Auth account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://10.128.0.6/api/v2.0/vm/id/51/restart",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth",
-        "options": {
-          "allowUnauthorizedCerts": true
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        448,
-        -192
-      ],
-      "id": "5363f31b-a2ac-4fec-90ae-77bc1eedd77d",
-      "name": "HTTP Request1",
-      "credentials": {
-        "httpBearerAuth": {
-          "id": "JJrGpaWR2CFIzksw",
-          "name": "Bearer Auth account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://10.128.0.6/api/v2.0/vm/id/52/restart",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth",
-        "options": {
-          "allowUnauthorizedCerts": true
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        448,
-        0
-      ],
-      "id": "95105c9b-838d-4efb-870c-fae8e64915c5",
-      "name": "HTTP Request2",
-      "credentials": {
-        "httpBearerAuth": {
-          "id": "JJrGpaWR2CFIzksw",
-          "name": "Bearer Auth account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://10.128.0.6//api/v2.0/vm/id/54/restart",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth",
-        "options": {
-          "allowUnauthorizedCerts": true
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        448,
-        192
-      ],
-      "id": "04353d0d-0517-4bcc-ae01-9a4c1b03a0df",
-      "name": "HTTP Request3",
-      "credentials": {
-        "httpBearerAuth": {
-          "id": "JJrGpaWR2CFIzksw",
-          "name": "Bearer Auth account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://10.128.0.6/api/v2.0/vm/id/55/restart",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth",
-        "options": {
-          "allowUnauthorizedCerts": true
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        448,
-        384
-      ],
-      "id": "2cb4d099-bcdf-446b-a33a-f65e6458a63f",
-      "name": "HTTP Request4",
-      "credentials": {
-        "httpBearerAuth": {
-          "id": "JJrGpaWR2CFIzksw",
-          "name": "Bearer Auth account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://10.128.0.6/api/v2.0/vm/id/56/restart",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBearerAuth",
-        "options": {
-          "allowUnauthorizedCerts": true
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        448,
-        576
-      ],
-      "id": "affc7c59-5621-4aa0-ad1d-d9d608f87b00",
-      "name": "HTTP Request5",
-      "credentials": {
-        "httpBearerAuth": {
-          "id": "JJrGpaWR2CFIzksw",
-          "name": "Bearer Auth account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "amount": 8
-      },
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        224,
-        576
-      ],
-      "id": "bfa0fec8-2533-4dac-a226-5fbdabb64ea2",
-      "name": "Wait5",
-      "webhookId": "54af53e6-6dae-46c4-913c-3a1ca85aa1d1"
+      "id": "ee2146f5-6ae8-4b6c-bb9e-b4ec63471465",
+      "name": "Schedule Trigger1"
     }
   ],
   "pinData": {},
   "connections": {
-    "Schedule Trigger": {
+    "Plan VM Rotation": {
       "main": [
         [
           {
-            "node": "Wait",
+            "node": "Check VM 50 Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check VM 50 Status": {
+      "main": [
+        [
+          {
+            "node": "Is VM 50 Running?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is VM 50 Running?": {
+      "main": [
+        [
+          {
+            "node": "Stop VM 50",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check VM 51 Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop VM 50": {
+      "main": [
+        [
+          {
+            "node": "Check VM 51 Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check VM 51 Status": {
+      "main": [
+        [
+          {
+            "node": "Is VM 51 Running?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is VM 51 Running?": {
+      "main": [
+        [
+          {
+            "node": "Stop VM 51",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check VM 52 Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop VM 51": {
+      "main": [
+        [
+          {
+            "node": "Check VM 52 Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check VM 52 Status": {
+      "main": [
+        [
+          {
+            "node": "Is VM 52 Running?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is VM 52 Running?": {
+      "main": [
+        [
+          {
+            "node": "Stop VM 52",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check VM 54 Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop VM 52": {
+      "main": [
+        [
+          {
+            "node": "Check VM 54 Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check VM 54 Status": {
+      "main": [
+        [
+          {
+            "node": "Is VM 54 Running?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is VM 54 Running?": {
+      "main": [
+        [
+          {
+            "node": "Stop VM 54",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check VM 55 Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop VM 54": {
+      "main": [
+        [
+          {
+            "node": "Check VM 55 Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check VM 55 Status": {
+      "main": [
+        [
+          {
+            "node": "Is VM 55 Running?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is VM 55 Running?": {
+      "main": [
+        [
+          {
+            "node": "Stop VM 55",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check VM 56 Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop VM 55": {
+      "main": [
+        [
+          {
+            "node": "Check VM 56 Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check VM 56 Status": {
+      "main": [
+        [
+          {
+            "node": "Is VM 56 Running?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is VM 56 Running?": {
+      "main": [
+        [
+          {
+            "node": "Stop VM 56",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait Start Slot 1",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Wait1",
+            "node": "Wait Start Slot 2",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Wait2",
+            "node": "Wait Start Slot 3",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Wait3",
+            "node": "Wait Start Slot 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop VM 56": {
+      "main": [
+        [
+          {
+            "node": "Wait Start Slot 1",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Wait4",
+            "node": "Wait Start Slot 2",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Wait5",
+            "node": "Wait Start Slot 3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait Start Slot 4",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Wait2": {
+    "Wait Start Slot 1": {
       "main": [
         [
           {
-            "node": "HTTP Request2",
+            "node": "Pre-Start Check Slot 1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Wait3": {
+    "Wait Start Slot 2": {
       "main": [
         [
           {
-            "node": "HTTP Request3",
+            "node": "Pre-Start Check Slot 2",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Wait4": {
+    "Wait Start Slot 3": {
       "main": [
         [
           {
-            "node": "HTTP Request4",
+            "node": "Pre-Start Check Slot 3",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Wait": {
+    "Wait Start Slot 4": {
       "main": [
         [
           {
-            "node": "HTTP Request",
+            "node": "Pre-Start Check Slot 4",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Wait1": {
+    "Pre-Start Check Slot 1": {
       "main": [
         [
           {
-            "node": "HTTP Request1",
+            "node": "Is Slot 1 Already Running?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Wait5": {
+    "Is Slot 1 Already Running?": {
       "main": [
         [
           {
-            "node": "HTTP Request5",
+            "node": "Re-Stop Slot 1 VM If Still Running",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Slot 1 Stopped Before Start?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Re-Stop Slot 1 VM If Still Running": {
+      "main": [
+        [
+          {
+            "node": "Wait Slot 1 Shutdown Grace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Slot 1 Shutdown Grace": {
+      "main": [
+        [
+          {
+            "node": "Post-Retry Check Slot 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post-Retry Check Slot 1": {
+      "main": [
+        [
+          {
+            "node": "Is Slot 1 Still Running After Retry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 1 Still Running After Retry?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Is Slot 1 Stopped After Retry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pre-Start Check Slot 2": {
+      "main": [
+        [
+          {
+            "node": "Is Slot 2 Already Running?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 2 Already Running?": {
+      "main": [
+        [
+          {
+            "node": "Re-Stop Slot 2 VM If Still Running",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Slot 2 Stopped Before Start?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Re-Stop Slot 2 VM If Still Running": {
+      "main": [
+        [
+          {
+            "node": "Wait Slot 2 Shutdown Grace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Slot 2 Shutdown Grace": {
+      "main": [
+        [
+          {
+            "node": "Post-Retry Check Slot 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post-Retry Check Slot 2": {
+      "main": [
+        [
+          {
+            "node": "Is Slot 2 Still Running After Retry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 2 Still Running After Retry?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Is Slot 2 Stopped After Retry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pre-Start Check Slot 3": {
+      "main": [
+        [
+          {
+            "node": "Is Slot 3 Already Running?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 3 Already Running?": {
+      "main": [
+        [
+          {
+            "node": "Re-Stop Slot 3 VM If Still Running",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Slot 3 Stopped Before Start?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Re-Stop Slot 3 VM If Still Running": {
+      "main": [
+        [
+          {
+            "node": "Wait Slot 3 Shutdown Grace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Slot 3 Shutdown Grace": {
+      "main": [
+        [
+          {
+            "node": "Post-Retry Check Slot 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post-Retry Check Slot 3": {
+      "main": [
+        [
+          {
+            "node": "Is Slot 3 Still Running After Retry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 3 Still Running After Retry?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Is Slot 3 Stopped After Retry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pre-Start Check Slot 4": {
+      "main": [
+        [
+          {
+            "node": "Is Slot 4 Already Running?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 4 Already Running?": {
+      "main": [
+        [
+          {
+            "node": "Re-Stop Slot 4 VM If Still Running",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Slot 4 Stopped Before Start?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Re-Stop Slot 4 VM If Still Running": {
+      "main": [
+        [
+          {
+            "node": "Wait Slot 4 Shutdown Grace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Slot 4 Shutdown Grace": {
+      "main": [
+        [
+          {
+            "node": "Post-Retry Check Slot 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post-Retry Check Slot 4": {
+      "main": [
+        [
+          {
+            "node": "Is Slot 4 Still Running After Retry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 4 Still Running After Retry?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Is Slot 4 Stopped After Retry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 1 Stopped Before Start?": {
+      "main": [
+        [
+          {
+            "node": "Start Slot 1 Selected VM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 1 Stopped After Retry?": {
+      "main": [
+        [
+          {
+            "node": "Start Slot 1 Selected VM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 2 Stopped Before Start?": {
+      "main": [
+        [
+          {
+            "node": "Start Slot 2 Selected VM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 2 Stopped After Retry?": {
+      "main": [
+        [
+          {
+            "node": "Start Slot 2 Selected VM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 3 Stopped Before Start?": {
+      "main": [
+        [
+          {
+            "node": "Start Slot 3 Selected VM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 3 Stopped After Retry?": {
+      "main": [
+        [
+          {
+            "node": "Start Slot 3 Selected VM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 4 Stopped Before Start?": {
+      "main": [
+        [
+          {
+            "node": "Start Slot 4 Selected VM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Slot 4 Stopped After Retry?": {
+      "main": [
+        [
+          {
+            "node": "Start Slot 4 Selected VM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Plan VM Rotation",
             "type": "main",
             "index": 0
           }
@@ -372,12 +2440,14 @@
   "active": true,
   "settings": {
     "executionOrder": "v1",
+    "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "2ca0ed4d-d766-42e8-a96a-75301e272f17",
+  "versionId": "84a401af-9302-441a-b5c9-a33fc797c645",
   "meta": {
     "instanceId": "94466eb9305cbb1792a8bad57c46d040e2297763e92d6394082da2bfd980a745"
   },
+  "nodeGroups": [],
   "id": "vn8WkUXMZraxhqzUIaTRA",
   "tags": []
 }
