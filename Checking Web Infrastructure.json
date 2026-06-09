@@ -238,7 +238,7 @@
       "typeVersion": 1.2,
       "position": [
         -672,
-        480
+        864
       ],
       "id": "ec891e43-d3e4-4d05-b5c0-f0932bf0ee2a",
       "name": "Schedule Trigger"
@@ -316,6 +316,210 @@
       ],
       "id": "0db71584-ae9b-4db1-8e26-df1f7dc6d25d",
       "name": "Create a channel5",
+      "webhookId": "fc1dd898-35fd-4ab9-9613-17ae76a20202",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "BkpR9JOAXv7mphas",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://www.repairte.com/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -448,
+        1248
+      ],
+      "id": "e44c3997-d995-4abc-8bf2-945a1ef6a820",
+      "name": "HTTP Request3",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d4e79741-d708-4802-8758-018b8f5a6c66",
+              "leftValue": "={{ $json.data }}",
+              "rightValue": "=<title>Kaine - Developer",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        1248
+      ],
+      "id": "65084f7c-a51a-45cb-9fa6-5ae990e3dd36",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "n8n automation has detected https://www.repairte.com is OFFLINE ❌",
+        "options": {},
+        "embeds": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        0,
+        1344
+      ],
+      "id": "8ec66d47-6da2-4687-aa6a-f8034847afd5",
+      "name": "Create a channel6",
+      "webhookId": "fc1dd898-35fd-4ab9-9613-17ae76a20202",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "BkpR9JOAXv7mphas",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "n8n automation has detected https://www.repairte.com is online✅",
+        "options": {},
+        "embeds": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        0,
+        1152
+      ],
+      "id": "f44c2964-d876-4728-92c9-86fc0e583cbb",
+      "name": "Create a channel7",
+      "webhookId": "fc1dd898-35fd-4ab9-9613-17ae76a20202",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "BkpR9JOAXv7mphas",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://staging-dev-us-01.repairte.com/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -448,
+        1632
+      ],
+      "id": "a5911b0a-28d9-4b33-9f44-b446ca15bb74",
+      "name": "HTTP Request4",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d4e79741-d708-4802-8758-018b8f5a6c66",
+              "leftValue": "={{ $json.data }}",
+              "rightValue": "=<title>Kaine - Developer",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        1632
+      ],
+      "id": "ef9d70ad-0188-4056-802d-b00a8cfe2e72",
+      "name": "If4"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "n8n automation has detected https://staging-dev-us-01.repairte.com is OFFLINE ❌",
+        "options": {},
+        "embeds": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        0,
+        1728
+      ],
+      "id": "8ceaaf45-2387-4cbc-b80d-d829542cf02d",
+      "name": "Create a channel8",
+      "webhookId": "fc1dd898-35fd-4ab9-9613-17ae76a20202",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "BkpR9JOAXv7mphas",
+          "name": "Discord Webhook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "n8n automation has detected https://staging-dev-us-01.repairte.com/ online✅",
+        "options": {},
+        "embeds": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        0,
+        1536
+      ],
+      "id": "2c0568cc-b523-4dfd-a0c8-53caa6e7adcb",
+      "name": "Create a channel9",
       "webhookId": "fc1dd898-35fd-4ab9-9613-17ae76a20202",
       "credentials": {
         "discordWebhookApi": {
@@ -431,6 +635,74 @@
             "node": "HTTP Request1",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Create a channel7",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a channel6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request4": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "Create a channel9",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a channel8",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -442,7 +714,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "fb77bbc6-1fa4-4676-9490-80b621d496cf",
+  "versionId": "052ad9b8-a517-4d6e-a0ef-014a74f2f084",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "94466eb9305cbb1792a8bad57c46d040e2297763e92d6394082da2bfd980a745"
