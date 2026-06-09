@@ -352,7 +352,7 @@
             {
               "id": "d4e79741-d708-4802-8758-018b8f5a6c66",
               "leftValue": "={{ $json.data }}",
-              "rightValue": "=<title>Kaine - Developer",
+              "rightValue": "=<title>Precision Test Equipment Repair &amp; Calibration | RTE Center | RTE Center LLC</title>",
               "operator": {
                 "type": "string",
                 "operation": "contains"
@@ -454,7 +454,7 @@
             {
               "id": "d4e79741-d708-4802-8758-018b8f5a6c66",
               "leftValue": "={{ $json.data }}",
-              "rightValue": "=<title>Kaine - Developer",
+              "rightValue": "=This is the Staging/Development Site",
               "operator": {
                 "type": "string",
                 "operation": "contains"
@@ -714,7 +714,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "052ad9b8-a517-4d6e-a0ef-014a74f2f084",
+  "versionId": "9556b4fd-b450-4deb-aa89-2c2a81ea7fca",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "94466eb9305cbb1792a8bad57c46d040e2297763e92d6394082da2bfd980a745"
